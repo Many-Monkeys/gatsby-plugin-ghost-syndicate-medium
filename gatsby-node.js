@@ -23,13 +23,15 @@ const syndicationQuery = `
   }
 }`
 
-function pageToMediumRecord({ node: { id, title, html, tags, url, feature_image, ...rest } }) {
+const pageToMediumRecord = (blogUrl) => ({ node: { id, title, html, tags, slug, feature_image, ...rest } }) => {
   const visibleTags = tags
     .filter(tag => tag.visibility === 'public')
     .map(tag => tag.name);
 
   const allTags = tags
     .map(tag => tag.name);
+
+  const canonicalUrl = `${blogUrl}/${slug}/`;
 
   return {
     medium: {
@@ -38,7 +40,7 @@ function pageToMediumRecord({ node: { id, title, html, tags, url, feature_image,
       publishStatus: 'draft',
       content: `<img src="${feature_image}" alt="${title}"/>${html}`,
       tags: visibleTags,
-      canonicalUrl: url
+      canonicalUrl: canonicalUrl,
     },
     tags: allTags,
     ...rest,
@@ -47,7 +49,7 @@ function pageToMediumRecord({ node: { id, title, html, tags, url, feature_image,
 
 const queries = {
   query: syndicationQuery,
-  transformer: ({ data }) => data.pages.edges.map(pageToMediumRecord)
+  transformer: (blogUrl, { data }) => data.pages.edges.map(pageToMediumRecord(blogUrl))
 }
 
 const getMyProfile = async (apiToken) => {
@@ -67,7 +69,8 @@ const postMediumArticle = async (apiToken, mediumUserId, mediumData) => {
 exports.onPostBuild = async function ({ graphql, reporter }, config) {
   const {
     apiToken,
-    syndicationTag,
+    blogUrl,
+    syndicationTag = null,
     age = 300,
     continueOnFailure = true,
   } = config;
@@ -75,9 +78,9 @@ exports.onPostBuild = async function ({ graphql, reporter }, config) {
   const activity = reporter.activityTimer(`syndication to Medium`);
   activity.start();
 
-  if (continueOnFailure === true && !(apiToken)) {
+  if (continueOnFailure === true && !(apiToken && blogUrl)) {
     activity.setStatus(
-      `options.continueOnFailure is true and apiToken is missing; skipping syndication`
+      `options.continueOnFailure is true and apiToken or blogUrl is missing; skipping syndication`
     );
     activity.end();
     return;
@@ -88,7 +91,7 @@ exports.onPostBuild = async function ({ graphql, reporter }, config) {
     const sinceUTC = DateTime.now().minus({ seconds: boundAge }).toUTC();
 
     const result = await graphql(queries.query);
-    const syndicatedPosts = (await queries.transformer(result))
+    const syndicatedPosts = (await queries.transformer(blogUrl, result))
       .filter(post => post.visibility === 'public')
       .filter(post => !syndicationTag || post.tags.includes(syndicationTag))
       .filter(post => DateTime.fromISO(post.updated_at).toUTC() > sinceUTC)
