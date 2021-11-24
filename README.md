@@ -11,9 +11,10 @@ Syndicate blog articles to Medium from your gatsby/ghost blog
             resolve: `@many-monkeys/gatsby-plugin-ghost-syndicate-medium`,
             options: {
                 apiToken: `your-medium-integration-token`,  // see https://medium.com/me/settings
+                blogUrl: `https://yourblog.com`,            // the host name of your blog
                 syndicationTag: `#medium`,                  // a tag (public or internal) to control access to which articles are syndicated - default null means all articles are considered
                 age: 300,                                   // how recent an article (updated) should be to be considered for syndication, between 180 and 3600 seconds, default 300
-                continueOnFailure: false,                    // allow publish to continue if failure occurs during syndication, default true
+                continueOnFailure: false,                   // allow publish to continue if failure occurs during syndication, default true
             },
         },
 ```
