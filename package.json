@@ -16,7 +16,8 @@
   "author": "Many-Monkeys",
   "description": "A gatsby plugin to syndicate blog articles to Medium from your gatsby/ghost blog",
   "dependencies": {
-    "lodash.chunk": "^4.2.0"
+    "axios": "^0.24.0",
+    "luxon": "^2.1.1"
   },
   "peerDependencies": {
     "gatsby": "^2.0.0 || ^3.0.0 || ^4.0.0"
